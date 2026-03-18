@@ -1,4 +1,4 @@
-const API = "http://localhost:3000";
+const API = ""; // Usar rutas relativas para que funcione desde el mismo servidor
 
 window.onload = () => {
     const user = localStorage.getItem("usuario");

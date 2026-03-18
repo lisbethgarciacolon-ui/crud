@@ -1,9 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 
 const app = express();
+
+// Servir el front-end desde la carpeta public
+app.use(express.static(path.join(__dirname, '../public')));
+
 const db = new sqlite3.Database('./tareas.db');
 
 // Crear tablas
@@ -167,8 +172,12 @@ app.delete('/tareas/:id', (req, res) => {
 });
 
 // ========== RUTA DE PRUEBA ==========
-app.get('/', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.json({ mensaje: 'API funcionando correctamente' });
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 const PORT = 3000;
