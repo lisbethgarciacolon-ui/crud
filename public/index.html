@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Tareas</title>
+    <style>
+        /* Tu mismo CSS, pero añade estos estilos al final */
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestor de Tareas</h1>
+
+    <div id="login">
+        <h2>Iniciar Sesión</h2>
+        <input id="user" placeholder="Usuario"><br><br>
+        <input id="pass" type="password" placeholder="Contraseña"><br><br>
+        <button onclick="login()">Entrar</button>
+        <button onclick="register()">Crear cuenta</button>
+    </div>
+
+    <div id="app" style="display:none;">
+        <h2>Bienvenido, <span id="usuarioNombre"></span></h2>
+
+        <div>
+            <input id="titulo" placeholder="Nueva tarea">
+            <button onclick="crearTarea()">Agregar</button>
+        </div>
+
+        <ul id="lista"></ul>
+
+        <button id="logoutBtn" onclick="logout()">Cerrar sesión</button>
+    </div>
+
+    <script src="gestor.js"></script>
+</body></html>

@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    transition: 0.3s;
+    color: #222;
+}
+
+body.dark {
+    background: #121212;
+    color: white;
+}
+
+.container {
+    width: 400px;
+    margin: auto;
+    margin-top: 50px;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px #aaa;
+}
+
+body.dark .container {
+    background: #1d1d1d;
+    box-shadow: 0px 0px 10px #000;
+}
+
+.add-task {
+    display: flex;
+    gap: 10px;
+}
+
+#taskInput {
+    flex: 1;
+    padding: 10px;
+}
+
+button {
+    padding: 10px;
+    cursor: pointer;
+}
+
+ul {
+    margin-top: 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.task {
+    background: #e0e0e0;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body.dark .task {
+    background: #333;
+}
+
+.done {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.task button {
+    margin-left: 5px;
+}
+.theme-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    background: #444;
+    color: white;
+}
+
+body.dark .theme-btn {
+    background: #ddd;
+    color: black;
+}
