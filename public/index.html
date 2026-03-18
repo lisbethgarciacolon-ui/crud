@@ -19,28 +19,39 @@
     </style>
 </head>
 <body>
-    <h1>Gestor de Tareas</h1>
+    <div class="container">
+        <header class="header">
+            <h1>Gestor de Tareas</h1>
+        </header>
 
-    <div id="login">
-        <h2>Iniciar Sesión</h2>
-        <input id="user" placeholder="Usuario"><br><br>
-        <input id="pass" type="password" placeholder="Contraseña"><br><br>
-        <button onclick="login()">Entrar</button>
-        <button onclick="register()">Crear cuenta</button>
-    </div>
-
-    <div id="app" style="display:none;">
-        <h2>Bienvenido, <span id="usuarioNombre"></span></h2>
-
-        <div>
-            <input id="titulo" placeholder="Nueva tarea">
-            <button onclick="crearTarea()">Agregar</button>
+        <div id="login" class="card">
+            <h2>Iniciar Sesión</h2>
+            <input id="user" class="input" placeholder="Usuario">
+            <input id="pass" class="input" type="password" placeholder="Contraseña">
+            <div class="buttons">
+                <button class="primary" onclick="login()">Entrar</button>
+                <button class="secondary" onclick="register()">Crear cuenta</button>
+            </div>
         </div>
 
-        <ul id="lista"></ul>
+        <div id="app" class="card" style="display:none;">
+            <h2>Bienvenido, <span id="usuarioNombre"></span></h2>
 
-        <button id="logoutBtn" onclick="logout()">Cerrar sesión</button>
+            <div class="add-task">
+                <input id="titulo" class="input" placeholder="Nueva tarea">
+                <button class="primary" onclick="crearTarea()">Agregar</button>
+            </div>
+
+            <ul id="lista"></ul>
+
+            <button id="logoutBtn" class="secondary" onclick="logout()">Cerrar sesión</button>
+        </div>
+
+        <footer class="footer">
+            <span>Simple CRUD de tareas con Node + SQLite</span>
+        </footer>
     </div>
 
     <script src="gestor.js"></script>
-</body></html>
+</body>
+</html>

@@ -1,86 +1,176 @@
 body {
-    font-family: Arial, sans-serif;
-    background: #f0f0f0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #e8f1ff 0%, #ffffff 60%, #e7f7f1 100%);
     transition: 0.3s;
-    color: #222;
+    color: #1f2937;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 body.dark {
-    background: #121212;
-    color: white;
+    background: linear-gradient(135deg, #0b1220 0%, #151b2f 50%, #0a121f 100%);
+    color: #e5e7eb;
 }
 
 .container {
-    width: 400px;
-    margin: auto;
-    margin-top: 50px;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px #aaa;
+    width: min(380px, 90vw);
+    padding: 30px 24px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 18px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
 }
 
 body.dark .container {
-    background: #1d1d1d;
-    box-shadow: 0px 0px 10px #000;
+    background: rgba(26, 30, 48, 0.78);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 1.9rem;
+    letter-spacing: 0.04em;
+}
+
+.card {
+    padding: 18px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    margin-bottom: 16px;
+}
+
+body.dark .card {
+    background: rgba(31, 38, 62, 0.6);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 1.3rem;
+    letter-spacing: 0.02em;
+}
+
+.input {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.25s ease;
+}
+
+.input:focus {
+    border-color: #5b9cff;
+    box-shadow: 0 0 0 3px rgba(91, 156, 255, 0.2);
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.primary {
+    background: linear-gradient(135deg, #4f94ff, #2b71ff);
+    color: white;
+}
+
+.secondary {
+    background: rgba(0, 0, 0, 0.08);
+    color: #1f2937;
+}
+
+body.dark .secondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: #e5e7eb;
 }
 
 .add-task {
     display: flex;
     gap: 10px;
-}
-
-#taskInput {
-    flex: 1;
-    padding: 10px;
-}
-
-button {
-    padding: 10px;
-    cursor: pointer;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
 }
 
 ul {
-    margin-top: 20px;
+    margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.task {
-    background: #e0e0e0;
+#lista li {
+    padding: 12px 12px;
+    border-radius: 10px;
+    background: rgba(0, 117, 255, 0.08);
     margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    transition: background 0.25s ease;
 }
 
-body.dark .task {
-    background: #333;
+body.dark #lista li {
+    background: rgba(57, 71, 108, 0.7);
 }
 
-.done {
-    text-decoration: line-through;
-    opacity: 0.6;
+#lista li span {
+    word-break: break-word;
 }
 
-.task button {
-    margin-left: 5px;
-}
-.theme-btn {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    border: none;
-    background: #444;
-    color: white;
+#lista li .tarea-estado {
+    font-size: 0.85rem;
+    opacity: 0.9;
 }
 
-body.dark .theme-btn {
-    background: #ddd;
-    color: black;
+#lista li button {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+}
+
+.footer {
+    font-size: 0.8rem;
+    text-align: center;
+    opacity: 0.7;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin: 10px 0;
+}
+
+.success-message {
+    color: #28a745;
+    font-size: 0.85rem;
+    margin: 10px 0;
 }
