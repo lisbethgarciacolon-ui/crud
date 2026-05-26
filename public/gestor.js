@@ -1,87 +1,5 @@
 const API = ""; // Usar rutas relativas para que funcione desde el mismo servidor
 
-window.onload = () => {
-    const token = localStorage.getItem("token");
-    const usuario = localStorage.getItem("usuario");
-    if (token && usuario) {
-        mostrarApp(usuario);
-    }
-};
-
-function getAuthHeaders() {
-    const token = localStorage.getItem("token");
-    return {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-    };
-}
-
-async function register() {
-    const usuario = document.getElementById("user").value;
-    const password = document.getElementById("pass").value;
-
-    if (!usuario || !password) {
-        alert("❌ Completa todos los campos");
-        return;
-    }
-
-    try {
-        const res = await fetch(API + "/auth/register", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ usuario, password })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            alert("✅ " + data.mensaje);
-            localStorage.setItem("usuario", usuario);
-            localStorage.setItem("token", data.token);
-            document.getElementById("user").value = "";
-            document.getElementById("pass").value = "";
-            mostrarApp(usuario);
-        } else {
-            alert("❌ " + data.error);
-        }
-
-    } catch (error) {
-        console.error("Error:", error);
-        alert("❌ Error de conexión. ¿El servidor está corriendo?");
-    }
-}
-
-async function login() {
-    const usuario = document.getElementById("user").value;
-    const password = document.getElementById("pass").value;
-
-    if (!usuario || !password) {
-        alert("Completa todos los campos");
-        return;
-    }
-
-    try {
-        const res = await fetch(API + "/auth/login", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ usuario, password })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            localStorage.setItem("usuario", usuario);
-            localStorage.setItem("token", data.token);
-            mostrarApp(usuario);
-        } else {
-            alert(data.error);
-        }
-    } catch (error) {
-        alert("Error de conexión con el servidor");
-        console.error(error);
-    }
-}
-
 function mostrarApp(usuario) {
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
@@ -90,9 +8,13 @@ function mostrarApp(usuario) {
 }
 
 function logout() {
-    localStorage.removeItem("usuario");
-    localStorage.removeItem("token");
-    location.reload();
+    fetch(API + "/auth/logout", {
+        method: "POST",
+        credentials: "same-origin"
+    }).finally(() => {
+        localStorage.removeItem("usuario");
+        location.reload();
+    });
 }
 
 async function crearTarea() {
@@ -104,7 +26,8 @@ async function crearTarea() {
 
     const res = await fetch(API + "/tareas", {
         method: "POST",
-        headers: getAuthHeaders(),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ titulo })
     });
 
@@ -125,7 +48,7 @@ async function crearTarea() {
 async function cargarTareas() {
     try {
         const res = await fetch(API + "/tareas", {
-            headers: getAuthHeaders()
+            credentials: "same-origin"
         });
 
         if (!res.ok) {
@@ -167,7 +90,7 @@ async function eliminarTarea(id) {
 
     const res = await fetch(API + "/tareas/" + id, {
         method: "DELETE",
-        headers: getAuthHeaders()
+        credentials: "same-origin"
     });
 
     if (!res.ok) {
@@ -188,7 +111,8 @@ async function editarTarea(id) {
     if (nuevo && nuevo.trim()) {
         const res = await fetch(API + "/tareas/" + id, {
             method: "PUT",
-            headers: getAuthHeaders(),
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ titulo: nuevo.trim() })
         });
 
@@ -209,7 +133,8 @@ async function editarTarea(id) {
 async function marcarCompletada(id) {
     const res = await fetch(API + "/tareas/" + id, {
         method: "PUT",
-        headers: getAuthHeaders(),
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: "completada" })
     });
 

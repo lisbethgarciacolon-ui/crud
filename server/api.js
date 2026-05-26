@@ -4,11 +4,17 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const SECRET = process.env.JWT_SECRET || 'mi_secreto_seguro_123';
 
+app.use(cookieParser());
+
 // Servir el front-end desde la carpeta public
+app.get('/gestor.js', authenticateToken, (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/gestor.js'));
+});
 app.use(express.static(path.join(__dirname, '../public')));
 
 const db = new sqlite3.Database('./tareas.db');
@@ -41,7 +47,7 @@ function generarToken(user) {
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = (authHeader && authHeader.split(' ')[1]) || req.cookies.token;
 
     if (!token) {
         return res.status(401).json({ error: 'No autorizado' });
@@ -76,9 +82,15 @@ app.post('/auth/register', async (req, res) => {
                     return res.status(400).json({ error: 'El usuario ya existe' });
                 }
 
+                const token = generarToken({ id: this.lastID, usuario });
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    maxAge: 2 * 60 * 60 * 1000
+                });
                 res.json({
                     mensaje: 'Usuario creado correctamente',
-                    token: generarToken({ id: this.lastID, usuario })
+                    token
                 });
             }
         );
@@ -106,13 +118,28 @@ app.post('/auth/login', (req, res) => {
             }
 
             const { password: _, ...userSinPassword } = user;
+            const token = generarToken(user);
+            res.cookie('token', token, {
+                httpOnly: true,
+                sameSite: 'lax',
+                maxAge: 2 * 60 * 60 * 1000
+            });
             res.json({ 
                 mensaje: 'Login correcto', 
                 user: userSinPassword,
-                token: generarToken(user)
+                token
             });
         }
     );
+});
+
+app.get('/auth/me', authenticateToken, (req, res) => {
+    res.json({ usuario: req.user.usuario, id: req.user.id });
+});
+
+app.post('/auth/logout', authenticateToken, (req, res) => {
+    res.clearCookie('token');
+    res.json({ mensaje: 'Logout correcto' });
 });
 
 // ========== OBTENER TAREAS ==========
