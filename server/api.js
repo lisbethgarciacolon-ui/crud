@@ -3,8 +3,10 @@ const cors = require('cors');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
+const SECRET = process.env.JWT_SECRET || 'mi_secreto_seguro_123';
 
 // Servir el front-end desde la carpeta public
 app.use(express.static(path.join(__dirname, '../public')));
@@ -33,6 +35,27 @@ db.serialize(() => {
 app.use(cors());
 app.use(express.json());
 
+function generarToken(user) {
+    return jwt.sign({ id: user.id, usuario: user.usuario }, SECRET, { expiresIn: '2h' });
+}
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: 'No autorizado' });
+    }
+
+    jwt.verify(token, SECRET, (err, user) => {
+        if (err) {
+            return res.status(401).json({ error: 'Token inválido' });
+        }
+        req.user = user;
+        next();
+    });
+}
+
 // ========== REGISTRO ==========
 app.post('/auth/register', async (req, res) => {
     try {
@@ -42,7 +65,6 @@ app.post('/auth/register', async (req, res) => {
             return res.status(400).json({ error: 'Faltan datos' });
         }
 
-        // Cifrar contraseña
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
 
@@ -53,7 +75,11 @@ app.post('/auth/register', async (req, res) => {
                 if (err) {
                     return res.status(400).json({ error: 'El usuario ya existe' });
                 }
-                res.json({ mensaje: 'Usuario creado correctamente' });
+
+                res.json({
+                    mensaje: 'Usuario creado correctamente',
+                    token: generarToken({ id: this.lastID, usuario })
+                });
             }
         );
     } catch (error) {
@@ -82,89 +108,95 @@ app.post('/auth/login', (req, res) => {
             const { password: _, ...userSinPassword } = user;
             res.json({ 
                 mensaje: 'Login correcto', 
-                user: userSinPassword 
+                user: userSinPassword,
+                token: generarToken(user)
             });
         }
     );
 });
 
 // ========== OBTENER TAREAS ==========
-app.get('/tareas/:usuario', (req, res) => {
-    db.get(
-        'SELECT id FROM usuarios WHERE usuario = ?',
-        [req.params.usuario],
-        (err, user) => {
-            if (err || !user) {
-                return res.status(401).json({ error: 'Usuario no autorizado' });
+app.get('/tareas', authenticateToken, (req, res) => {
+    db.all(
+        'SELECT * FROM tareas WHERE usuario_id = ? ORDER BY id DESC',
+        [req.user.id],
+        (err, tareas) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error al cargar tareas' });
             }
-
-            db.all(
-                'SELECT * FROM tareas WHERE usuario_id = ? ORDER BY id DESC',
-                [user.id],
-                (err, tareas) => {
-                    if (err) {
-                        return res.status(500).json({ error: 'Error al cargar tareas' });
-                    }
-                    res.json(tareas);
-                }
-            );
+            res.json(tareas);
         }
     );
 });
 
 // ========== CREAR TAREA ==========
-app.post('/tareas', (req, res) => {
-    const { titulo, usuario } = req.body;
+app.post('/tareas', authenticateToken, (req, res) => {
+    const { titulo } = req.body;
 
-    db.get(
-        'SELECT id FROM usuarios WHERE usuario = ?',
-        [usuario],
-        (err, user) => {
-            if (err || !user) {
-                return res.status(401).json({ error: 'Usuario no autorizado' });
+    if (!titulo || !titulo.trim()) {
+        return res.status(400).json({ error: 'Título obligatorio' });
+    }
+
+    db.run(
+        'INSERT INTO tareas (titulo, usuario_id) VALUES (?, ?)',
+        [titulo.trim(), req.user.id],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Error al crear tarea' });
             }
-
-            db.run(
-                'INSERT INTO tareas (titulo, usuario_id) VALUES (?, ?)',
-                [titulo, user.id],
-                function(err) {
-                    if (err) {
-                        return res.status(500).json({ error: 'Error al crear tarea' });
-                    }
-                    res.json({ 
-                        mensaje: 'Tarea creada',
-                        id: this.lastID 
-                    });
-                }
-            );
+            res.json({ 
+                mensaje: 'Tarea creada',
+                id: this.lastID 
+            });
         }
     );
 });
 
 // ========== ACTUALIZAR TAREA ==========
-app.put('/tareas/:id', (req, res) => {
+app.put('/tareas/:id', authenticateToken, (req, res) => {
     const { titulo, estado } = req.body;
-    
-    db.run(
-        'UPDATE tareas SET titulo = ?, estado = ? WHERE id = ?',
-        [titulo, estado, req.params.id],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: 'Error al actualizar' });
-            }
-            res.json({ mensaje: 'Tarea actualizada' });
+    const updates = [];
+    const params = [];
+
+    if (titulo != null) {
+        updates.push('titulo = ?');
+        params.push(titulo.trim());
+    }
+
+    if (estado != null) {
+        updates.push('estado = ?');
+        params.push(estado);
+    }
+
+    if (updates.length === 0) {
+        return res.status(400).json({ error: 'No hay datos para actualizar' });
+    }
+
+    params.push(req.params.id, req.user.id);
+
+    const query = `UPDATE tareas SET ${updates.join(', ')} WHERE id = ? AND usuario_id = ?`;
+    db.run(query, params, function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Error al actualizar' });
         }
-    );
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Tarea no encontrada' });
+        }
+        res.json({ mensaje: 'Tarea actualizada' });
+    });
 });
 
 // ========== ELIMINAR TAREA ==========
-app.delete('/tareas/:id', (req, res) => {
+app.delete('/tareas/:id', authenticateToken, (req, res) => {
     db.run(
-        'DELETE FROM tareas WHERE id = ?',
-        [req.params.id],
+        'DELETE FROM tareas WHERE id = ? AND usuario_id = ?',
+        [req.params.id, req.user.id],
         function(err) {
             if (err) {
                 return res.status(500).json({ error: 'Error al eliminar' });
+            }
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Tarea no encontrada' });
             }
             res.json({ mensaje: 'Tarea eliminada' });
         }

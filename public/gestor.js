@@ -1,11 +1,20 @@
 const API = ""; // Usar rutas relativas para que funcione desde el mismo servidor
 
 window.onload = () => {
-    const user = localStorage.getItem("usuario");
-    if (user) {
-        mostrarApp(user);
+    const token = localStorage.getItem("token");
+    const usuario = localStorage.getItem("usuario");
+    if (token && usuario) {
+        mostrarApp(usuario);
     }
 };
+
+function getAuthHeaders() {
+    const token = localStorage.getItem("token");
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+}
 
 async function register() {
     const usuario = document.getElementById("user").value;
@@ -27,8 +36,11 @@ async function register() {
 
         if (res.ok) {
             alert("✅ " + data.mensaje);
+            localStorage.setItem("usuario", usuario);
+            localStorage.setItem("token", data.token);
             document.getElementById("user").value = "";
             document.getElementById("pass").value = "";
+            mostrarApp(usuario);
         } else {
             alert("❌ " + data.error);
         }
@@ -59,6 +71,7 @@ async function login() {
 
         if (res.ok) {
             localStorage.setItem("usuario", usuario);
+            localStorage.setItem("token", data.token);
             mostrarApp(usuario);
         } else {
             alert(data.error);
@@ -73,11 +86,12 @@ function mostrarApp(usuario) {
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
     document.getElementById("usuarioNombre").textContent = usuario;
-    cargarTareas(usuario);
+    cargarTareas();
 }
 
 function logout() {
     localStorage.removeItem("usuario");
+    localStorage.removeItem("token");
     location.reload();
 }
 
@@ -87,24 +101,44 @@ async function crearTarea() {
         alert("Escribe un título");
         return;
     }
-    
-    const usuario = localStorage.getItem("usuario");
 
-    await fetch(API + "/tareas", {
+    const res = await fetch(API + "/tareas", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ titulo, usuario })
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ titulo })
     });
 
+    if (!res.ok) {
+        if (res.status === 401) {
+            logout();
+            return;
+        }
+        const data = await res.json();
+        alert(data.error || "Error al crear la tarea");
+        return;
+    }
+
     document.getElementById("titulo").value = "";
-    cargarTareas(usuario);
+    cargarTareas();
 }
 
-async function cargarTareas(usuario) {
+async function cargarTareas() {
     try {
-        const res = await fetch(API + "/tareas/" + usuario);
-        const tareas = await res.json();
+        const res = await fetch(API + "/tareas", {
+            headers: getAuthHeaders()
+        });
 
+        if (!res.ok) {
+            if (res.status === 401) {
+                logout();
+                return;
+            }
+            const data = await res.json();
+            alert(data.error || "Error al cargar tareas");
+            return;
+        }
+
+        const tareas = await res.json();
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
@@ -130,27 +164,64 @@ async function cargarTareas(usuario) {
 
 async function eliminarTarea(id) {
     if (!confirm("¿Eliminar tarea?")) return;
-    
-    await fetch(API + "/tareas/" + id, { method: "DELETE" });
-    cargarTareas(localStorage.getItem("usuario"));
+
+    const res = await fetch(API + "/tareas/" + id, {
+        method: "DELETE",
+        headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+        if (res.status === 401) {
+            logout();
+            return;
+        }
+        const data = await res.json();
+        alert(data.error || "Error al eliminar la tarea");
+        return;
+    }
+
+    cargarTareas();
 }
 
 async function editarTarea(id) {
     const nuevo = prompt("Nuevo título:");
     if (nuevo && nuevo.trim()) {
-        await fetch(API + "/tareas/" + id, {
+        const res = await fetch(API + "/tareas/" + id, {
             method: "PUT",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ titulo: nuevo, estado: "pendiente" })
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ titulo: nuevo.trim() })
         });
-        cargarTareas(localStorage.getItem("usuario"));
+
+        if (!res.ok) {
+            if (res.status === 401) {
+                logout();
+                return;
+            }
+            const data = await res.json();
+            alert(data.error || "Error al editar la tarea");
+            return;
+        }
+
+        cargarTareas();
     }
 }
 
 async function marcarCompletada(id) {
-    await fetch(API + "/tareas/" + id, {
+    const res = await fetch(API + "/tareas/" + id, {
         method: "PUT",
-        headers: {"Content-Type": "application/json"},
+        headers: getAuthHeaders(),
         body: JSON.stringify({ estado: "completada" })
     });
-    cargarTareas(localStorage.getItem("usuario"));}
+
+    if (!res.ok) {
+        if (res.status === 401) {
+            logout();
+            return;
+        }
+        const data = await res.json();
+        alert(data.error || "Error al cambiar el estado");
+        return;
+    }
+
+    cargarTareas();
+}
